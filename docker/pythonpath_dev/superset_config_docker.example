@@ -3,6 +3,9 @@ FEATURE_FLAGS = {
     "ENABLE_TEMPLATE_PROCESSING": True
 }
 
+# En caso de que el docker-compose se exponga otro puerto
+SUPERSET_FRONTEND_PORT = 8000
+
 # Permito que el rol Public sea igual que Gamma
 PUBLIC_ROLE_LIKE_GAMMA = True
 
