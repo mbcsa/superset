@@ -28,6 +28,6 @@ LANGUAGES = {
 # https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
 CSV_EXPORT = {
     'encoding': 'utf-8',
-    'sep':';',
-    'decimal':',',
+    'sep': ';',
+    'decimal': ',',
 }
