@@ -22,3 +22,5 @@
 !superset_config.py
 !superset_config_local.example
 !superset_config_docker.example
+!aimind_security.py
+!security.py
