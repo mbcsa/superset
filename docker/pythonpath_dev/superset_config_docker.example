@@ -7,7 +7,7 @@ FEATURE_FLAGS = {
 SUPERSET_FRONTEND_PORT = 8000
 
 # Permito que el rol Public sea igual que Gamma
-PUBLIC_ROLE_LIKE_GAMMA = True
+# PUBLIC_ROLE_LIKE_GAMMA = True
 
 # ---------------------------------------------------
 # Babel config for translations
@@ -31,3 +31,6 @@ CSV_EXPORT = {
     'sep': ';',
     'decimal': ',',
 }
+
+AUTH_BEARER_HOST = "lhtrfront.localhost.net"
+AUTH_USER_ENDPOINT = "http://lhtrfront.localhost.net/api/me"

@@ -1,12 +1,18 @@
-from tokenize import String
-import requests
-import jwt
 import logging
-from flask import current_app, redirect, g, flash, request as frequest
-from flask_appbuilder.security.views import AuthDBView
-from flask_appbuilder.security.views import expose
+import random
+import string
+from base64 import urlsafe_b64decode
+from tokenize import String
+from urllib import parse as urlparse
+
+import jwt
+import requests
+from flask import current_app, flash, g, redirect, request as frequest
+from flask_appbuilder.security.views import AuthDBView, expose
 from flask_login import login_user
+
 from superset.security.manager import SupersetSecurityManager
+
 logger = logging.getLogger()
 
 class CustomAuthDBView(AuthDBView):
@@ -14,44 +20,68 @@ class CustomAuthDBView(AuthDBView):
 
     @expose('/login/', methods=['GET', 'POST'])
     def login(self):
-        print("Ingrese en login")
+        print("%s CustomAuthDBView::login %s" % ("*" * 10, "*" * 10))
         token = frequest.args.get('token')
+
+        AUTH_BEARER_HOST = current_app.config.get('AUTH_BEARER_HOST')
+        AUTH_USER_ENDPOINT = current_app.config.get('AUTH_USER_ENDPOINT')
+
         if not token:
             token = frequest.cookies.get('access_token')
+
         if token is not None:
-            print("El token es: " + token)
             # Autentico contra backend yii2
             headers = {
                 "Authorization": str("Bearer " + token),
                 "Accept": "application/json",
-                "Host": "lhtrfront.localhost.net"
+                "Host": AUTH_BEARER_HOST
             }
-            res = requests.get("http://lhtrfront.localhost.net/api/me", headers=headers, allow_redirects=False)
-            
-            print('response from server:',res.text)
-            # response from server: {"user_id":1,"firstname":"Maro","lastname":"Berasategui","PERNR":"00011750","es_jefe":0,"grupo_id":null,"equipo_id":null}
-            
-            print("El username es: " + res.firstname)
-            user = self.appbuilder.sm.find_user(username=res.username)
+
+            response = requests.get(AUTH_USER_ENDPOINT, headers=headers, allow_redirects=False)
+
+            if not response.ok:
+                return super(CustomAuthDBView, self).login()
+
+            response = response.json()
+
+            username = response.get('username')
+            user = self.appbuilder.sm.find_user(username=username)
+
             if not user:
-                print("NOT USER")
-            #   role_admin = self.appbuilder.sm.find_role('Admin')
-            #   user = self.appbuilder.sm.add_user(user_name, user_name, 'aimind', user_name + "@aimind.com", role_admin, password = "aimind" + user_name)
+                print("Usuario inexistente. Creando...")
+
+                firstname = response.get('firstname')
+                lastname = response.get('lastname')
+                email = response.get('email')
+                role = self.appbuilder.sm.find_role('Gamma')
+                password = self._generate_random_string(32)
+
+                user = self.appbuilder.sm.add_user(
+                    username, firstname, lastname, email, role, 
+                    password=self._generate_random_string(32)
+                )
+
+                role = self.appbuilder.sm.find_role('Portal')
+                user.roles.append(role)
+                self.appbuilder.sm.update_user(user)
+
             if user:
-                print("SI, MAN ES USER")
                 login_user(user, remember=False)
                 redirect_url = frequest.args.get('redirect')
-                if not redirect_url:
-                    redirect_url = self.appbuilder.get_url_for_index
+
+                redirect_url = urlsafe_b64decode(redirect_url) if redirect_url else self.appbuilder.get_url_for_index
+                
                 return redirect(redirect_url)
-            else:
-                return super(CustomAuthDBView,self).login()
-        else:
-            flash('Unable to auto login', 'warning')
+
             return super(CustomAuthDBView,self).login()
+
+        flash('Unable to auto login', 'warning')
+        return super(CustomAuthDBView,self).login()
+
+    def _generate_random_string(self, length):
+        charset = string.ascii_letters + string.digits + string.punctuation
+        return "".join(random.choices(charset, k=length))
+
 
 class CustomSecurityManager(SupersetSecurityManager):
     authdbview = CustomAuthDBView
-
-#    def __init__(self, appbuilder):
-#        super(CustomSecurityManager, self).__init__(appbuilder)
