@@ -1,7 +1,13 @@
+from aimind_security import CustomSecurityManager
+CUSTOM_SECURITY_MANAGER = CustomSecurityManager
+
 FEATURE_FLAGS = {
     "ALERT_REPORTS": True,
     "ENABLE_TEMPLATE_PROCESSING": True
 }
+
+# Inicialmente no debería ser necesario
+# SESSION_COOKIE_SAMESITE=None
 
 # En caso de que el docker-compose se exponga otro puerto
 SUPERSET_FRONTEND_PORT = 8000
