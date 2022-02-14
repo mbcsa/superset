@@ -2,8 +2,6 @@ import logging
 import random
 import string
 from base64 import urlsafe_b64decode
-from tokenize import String
-from urllib import parse as urlparse
 
 import jwt
 import requests
@@ -53,17 +51,14 @@ class CustomAuthDBView(AuthDBView):
                 firstname = response.get('firstname')
                 lastname = response.get('lastname')
                 email = response.get('email')
-                role = self.appbuilder.sm.find_role('Gamma')
-                password = self._generate_random_string(32)
+
+                default_roles = current_app.config.get('DEFAULT_USER_ROLES', [])
+                roles = [ self.appbuilder.sm.find_role(role_name) for role_name in default_roles ]
 
                 user = self.appbuilder.sm.add_user(
-                    username, firstname, lastname, email, role, 
+                    username, firstname, lastname, email, roles, 
                     password=self._generate_random_string(32)
                 )
-
-                role = self.appbuilder.sm.find_role('Portal')
-                user.roles.append(role)
-                self.appbuilder.sm.update_user(user)
 
             if user:
                 login_user(user, remember=False)
