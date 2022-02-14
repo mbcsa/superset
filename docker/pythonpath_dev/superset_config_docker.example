@@ -38,5 +38,6 @@ CSV_EXPORT = {
     'decimal': ',',
 }
 
-AUTH_BEARER_HOST = "lhtrfront.localhost.net"
-AUTH_USER_ENDPOINT = "http://lhtrfront.localhost.net/api/me"
+AUTH_BEARER_HOST = "mydomain.net"
+AUTH_USER_ENDPOINT = "http://api.mydomain.net/user"
+DEFAULT_USER_ROLES = []
