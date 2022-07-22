@@ -39,6 +39,8 @@ services:
     image: postgres:10
     container_name: superset_db
     restart: unless-stopped
+    ports:
+      - 5432:5432
     volumes:
       - superset_db_home:/var/lib/postgresql/data
 
@@ -50,8 +52,8 @@ services:
     user: "root"
     restart: unless-stopped
     ports:
-      - 8000:8088
-#      - 8088:8088
+#      - 8000:8088
+      - 8088:8088
     depends_on: *superset-depends-on
     volumes: *superset-volumes
     extra_hosts:
