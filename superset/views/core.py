@@ -2508,7 +2508,7 @@ class Superset(BaseSupersetView):  # pylint: disable=too-many-public-methods
 
             df = pd.DataFrame(
                 data=obj["data"],
-                dtype=object,
+                # dtype=object,
                 columns=[c["name"] for c in obj["columns"]],
             )
 
