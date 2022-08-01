@@ -99,10 +99,6 @@ WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
 
 SQLLAB_CTAS_NO_LIMIT = True
 
-
-from aimind_security import CustomSecurityManager
-CUSTOM_SECURITY_MANAGER = CustomSecurityManager
-
 #
 # Optionally import superset_config_docker.py (which will have been included on
 # the PYTHONPATH) in order to allow for local settings to be overridden
