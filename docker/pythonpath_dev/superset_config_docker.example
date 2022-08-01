@@ -6,8 +6,19 @@ FEATURE_FLAGS = {
     "ENABLE_TEMPLATE_PROCESSING": True
 }
 
+# En caso de que el docker-compose se exponga otro puerto
+ENABLE_PROXY_FIX = True
+PROXY_FIX_CONFIG = {"x_for": 1, "x_proto": 1, "x_host": 1, "x_port": 0, "x_prefix": 1}
+SUPERSET_FRONTEND_PORT = 80
+WEBDRIVER_BASEURL="set.test.corsisa.com.ar"
+SUPERSET_WEBSERVER_PROTOCOL = "https"
+
+# SUPERSET_WEBSERVER_PROTOCOL = "https"
+WTF_CSRF_ENABLED = False
+
 # Inicialmente no debería ser necesario
-# SESSION_COOKIE_SAMESITE=None
+SESSION_COOKIE_SAMESITE="None"
+SESSION_COOKIE_SECURE=True
 
 # En caso de que el docker-compose se exponga otro puerto
 SUPERSET_FRONTEND_PORT = 8000
@@ -38,5 +49,27 @@ CSV_EXPORT = {
     'decimal': ',',
 }
 
+# Email configuration
+
+ENABLE_SCHEDULED_EMAIL_REPORTS = True
+
+EMAIL_NOTIFICATIONS = True
+
+SMTP_HOST = "smtp.gmail.com"
+SMTP_STARTTLS = False
+SMTP_SSL = True
+SMTP_USER = "EMAIL"
+SMTP_PORT = "465"
+SMTP_PASSWORD = "****"
+SMTP_MAIL_FROM = "EMAIL"
+
+WEBDRIVER_TYPE = "firefox"
+
+ALERT_REPORTS_NOTIFICATION_DRY_RUN = False
+WEBDRIVER_BASEURL = "http://superset:8088/"
+# The base URL for the email report hyperlinks.
+WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
+
+AUTH_BEARER_HOST = "api.mydomain.net"
 AUTH_USER_ENDPOINT = "http://api.mydomain.net/user"
 DEFAULT_USER_ROLES = []
