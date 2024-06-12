@@ -1,0 +1,70 @@
+# https://blog.devgenius.io/apache-superset-integration-with-keycloak-3571123e0acf
+import os
+import logging
+from flask_appbuilder.security.manager import AUTH_OAUTH
+from superset.security import SupersetSecurityManager
+
+EMBEDDABLE_CHARTS = True
+
+#####################################################################################################
+# ######### IMPORTANTE: HABILITAR CLIENT SCOPE ROLES en USER INFO #########
+# Durante el proceso de Login, Superset realiza una consulta a "userinfo" para sincronizar los roles. 
+#   --> Por defecto, Keycloak no agrega la información de roles en el endpoint de "userinfo".
+#
+# Si no existe, crear un client scope llamado "role_keys". 
+#   * Agregar un mapper, buscando por configuración seleccionar "Role List".
+#
+# Volver a Client scopes, seleccionar "role_keys" y configurar:
+#   * En la sección "Mappers", seleccionar "Client Roles" y habilitar "Add to userinfo"
+# 
+# OTRA - En la config del cliente keycloak configurar como Valid redirect URI http://<superset>:8088/*
+#####################################################################################################
+AUTH_TYPE = AUTH_OAUTH # Enable OAuth authentication
+LOGOUT_REDIRECT_URL=os.getenv("OAUTH_LOGOUT_REDIRECT_URL")
+AUTH_USER_REGISTRATION = True  # allow users who are not already in the FAB DB
+AUTH_USER_REGISTRATION_ROLE = "Public" # The default user self registration role
+AUTH_ROLES_MAPPING = {
+    "SupersetAdmin": ["Admin"],
+    "SupersetPortal": ["Gamma","Alpha"],
+    "SupersetGamma": ["Gamma"]
+}
+AUTH_ROLES_SYNC_AT_LOGIN = True # if we should replace ALL the user's roles each login, or only on registration
+PERMANENT_SESSION_LIFETIME = 1800 # force users to re-auth after 30min of inactivity (to keep roles in sync)
+OAUTH_PROVIDERS = [
+    {
+        "name": os.getenv("OAUTH_ISSUER_NAME"),
+        "icon": os.getenv("OAUTH_ISSUER_ICON"),
+        "token_key": os.getenv("OAUTH_TOKEN_KEY"),
+        "remote_app": {
+            "client_id": os.getenv("OAUTH_CLIENT_ID"),
+            "client_secret": os.getenv("OAUTH_CLIENT_SECRET"),
+            "client_kwargs": {
+                "scope": os.getenv("OAUTH_SCOPES")
+            },
+            "access_token_url": os.getenv("OAUTH_ACCESS_TOKEN_URL"),
+            "authorize_url": os.getenv("OAUTH_AUTHORIZE_URL"),
+            "server_metadata_url": os.getenv("OAUTH_SERVER_METADATA_URL"),
+            "request_token_url": None,
+            "jwks_uri": os.getenv("OAUTH_JWKS_URI"),
+            "api_base_url": os.getenv("OAUTH_API_BASE_URL"),
+        },
+    },
+]
+
+# Lo siguiente es necesario por un Bug.
+# https://github.com/mitodl/ol-infrastructure/blob/main/src/ol_superset/pythonpath/superset_config.py#L88-L103
+class CustomSsoSecurityManager(SupersetSecurityManager):
+    def oauth_user_info(self, provider, response=None):  # noqa: ARG002
+        me = self.appbuilder.sm.oauth_remotes[provider].get("openid-connect/userinfo")
+        me.raise_for_status()
+        data = me.json()
+        logging.debug("User info from Keycloak: %s", data)
+        return {
+            "username": data.get("preferred_username", ""),
+            "first_name": data.get("given_name", ""),
+            "last_name": data.get("family_name", ""),
+            "email": data.get("email", ""),
+            "role_keys": data.get("role_keys", []),
+        }
+
+CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
