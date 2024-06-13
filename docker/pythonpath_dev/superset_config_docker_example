@@ -6,6 +6,55 @@ from superset.security import SupersetSecurityManager
 
 EMBEDDABLE_CHARTS = True
 
+FEATURE_FLAGS = {
+    "ALERT_REPORTS": True,
+    "ENABLE_TEMPLATE_PROCESSING": True
+}
+
+SUPERSET_WEBSERVER_PROTOCOL = "https"
+SUPERSET_FRONTEND_PORT = 8088
+
+# ---------------------------------------------------
+# Babel config for translations
+# ---------------------------------------------------
+# Setup default language
+BABEL_DEFAULT_LOCALE = 'es'
+# Your application default translation path
+BABEL_DEFAULT_FOLDER = 'babel/translations'
+# The allowed translation for you app
+LANGUAGES = {
+    'es': {'flag': 'es', 'name': 'Español'},
+    'en': {'flag': 'us', 'name': 'English'},
+    'it': {'flag': 'it', 'name': 'Italian'},
+    'fr': {'flag': 'fr', 'name': 'French'},
+}
+
+# Configuración para exportar a CSV con pandas
+# https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_csv.html
+CSV_EXPORT = {
+    'encoding': 'utf-8',
+    'sep': ';',
+    'decimal': ',',
+}
+
+D3_FORMAT = {
+    'decimal': ',',
+    'thousands': '.',
+    'currency': ['$', '']
+}
+
+# ENABLE_SCHEDULED_EMAIL_REPORTS = True
+# EMAIL_NOTIFICATIONS = True
+# SMTP_HOST = "smtp.gmail.com"
+# SMTP_STARTTLS = False
+# SMTP_SSL = True
+# SMTP_USER = "EMAIL"
+# SMTP_PORT = "465"
+# SMTP_PASSWORD = "****"
+# SMTP_MAIL_FROM = "EMAIL"
+# WEBDRIVER_TYPE = "firefox"
+# ALERT_REPORTS_NOTIFICATION_DRY_RUN = False
+
 #####################################################################################################
 # ######### IMPORTANTE: HABILITAR CLIENT SCOPE ROLES en USER INFO #########
 # Durante el proceso de Login, Superset realiza una consulta a "userinfo" para sincronizar los roles. 
