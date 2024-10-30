@@ -22,3 +22,5 @@
 !superset_config.py
 !superset_config_local.example
 !superset_config_docker_example
+!keycloak_security_manager.py
+!example_client_secret.json
