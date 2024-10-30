@@ -114,3 +114,4 @@ superset/translations/**/messages.mo
 
 cache/
 docker/*local*
+docker-compose-non-dev_AJUSTADO.yml
