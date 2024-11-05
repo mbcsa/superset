@@ -4,7 +4,12 @@ import logging
 from flask_appbuilder.security.manager import AUTH_OAUTH
 from superset.security import SupersetSecurityManager
 
+WEBDRIVER_BASEURL=os.getenv("SUPERSET_WEBDRIVER_BASEURL")
+# The base URL for the email report hyperlinks.
+WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
+
 EMBEDDABLE_CHARTS = True
+ENABLE_PROXY_FIX = True
 
 FEATURE_FLAGS = {
     "ALERT_REPORTS": True,
@@ -12,7 +17,14 @@ FEATURE_FLAGS = {
 }
 
 SUPERSET_WEBSERVER_PROTOCOL = "https"
-SUPERSET_FRONTEND_PORT = 8088
+# SUPERSET_FRONTEND_PORT = 8088
+
+###########
+# Para habilitar el iframe en Angular
+HTTP_HEADERS={"X-Frame-Options":"ALLOWALL"} 
+ENABLE_CORS = True
+TALISMAN_ENABLED = False
+###########
 
 # ---------------------------------------------------
 # Babel config for translations
@@ -43,18 +55,6 @@ D3_FORMAT = {
     'currency': ['$', '']
 }
 
-# ENABLE_SCHEDULED_EMAIL_REPORTS = True
-# EMAIL_NOTIFICATIONS = True
-# SMTP_HOST = "smtp.gmail.com"
-# SMTP_STARTTLS = False
-# SMTP_SSL = True
-# SMTP_USER = "EMAIL"
-# SMTP_PORT = "465"
-# SMTP_PASSWORD = "****"
-# SMTP_MAIL_FROM = "EMAIL"
-# WEBDRIVER_TYPE = "firefox"
-# ALERT_REPORTS_NOTIFICATION_DRY_RUN = False
-
 #####################################################################################################
 # ######### IMPORTANTE: HABILITAR CLIENT SCOPE ROLES en USER INFO #########
 # Durante el proceso de Login, Superset realiza una consulta a "userinfo" para sincronizar los roles. 
@@ -75,45 +75,93 @@ AUTH_USER_REGISTRATION_ROLE = "Public" # The default user self registration role
 AUTH_ROLES_MAPPING = {
     "SupersetAdmin": ["Admin"],
     "SupersetPortal": ["Gamma","Alpha"],
-    "SupersetGamma": ["Gamma"]
+    "SupersetGamma": ["Gamma"],
+    "Supersetsql_lab": ["sql_lab"],
 }
 AUTH_ROLES_SYNC_AT_LOGIN = True # if we should replace ALL the user's roles each login, or only on registration
+
 PERMANENT_SESSION_LIFETIME = 1800 # force users to re-auth after 30min of inactivity (to keep roles in sync)
-OAUTH_PROVIDERS = [
-    {
-        "name": os.getenv("OAUTH_ISSUER_NAME"),
-        "icon": os.getenv("OAUTH_ISSUER_ICON"),
-        "token_key": os.getenv("OAUTH_TOKEN_KEY"),
-        "remote_app": {
-            "client_id": os.getenv("OAUTH_CLIENT_ID"),
-            "client_secret": os.getenv("OAUTH_CLIENT_SECRET"),
-            "client_kwargs": {
-                "scope": os.getenv("OAUTH_SCOPES")
-            },
-            "access_token_url": os.getenv("OAUTH_ACCESS_TOKEN_URL"),
-            "authorize_url": os.getenv("OAUTH_AUTHORIZE_URL"),
-            "server_metadata_url": os.getenv("OAUTH_SERVER_METADATA_URL"),
-            "request_token_url": None,
-            "jwks_uri": os.getenv("OAUTH_JWKS_URI"),
-            "api_base_url": os.getenv("OAUTH_API_BASE_URL"),
-        },
-    },
-]
+
+
+############################################################
+# Error de multiples redirecciones por problema en la sesión
+# REF: https://github.com/apache/superset/discussions/30302
+SESSION_COOKIE_HTTPONLY = True  # Prevent cookie from being read by frontend JS?
+SESSION_COOKIE_SECURE = False  # Prevent cookie from being transmitted over non-tls?
+SESSION_COOKIE_SAMESITE = "Lax"
+# Whether to use server side sessions from flask-session or Flask secure cookies
+SESSION_SERVER_SIDE = True
+# Example config using Redis as the backend for server side sessions
+# from flask_session import RedisSessionInterface
+from flask_session import Session
+from redis import Redis
+# SESSION_USE_SIGNER = True
+SESSION_TYPE = "redis"
+SESSION_REDIS = Redis(host="redis", port=6379, db=0)
+############################################################
+
+############################################################
+# EN LUGAR DE USAR OAUTH SE USA OID.
+# Si bien OAUTH funciona perfecto, muestra una vista de login
+# donde el usuario debe confirmar autenticar.
+# Con OID, es más laborioso, pero permite "pisar" las vistas
+# y evitar el paso adicional del botón.
+
+
+######
+# OAUTH_PROVIDERS = [
+#     {
+#         "name": os.getenv("OAUTH_ISSUER_NAME"),
+#         "icon": os.getenv("OAUTH_ISSUER_ICON"),
+#         "token_key": os.getenv("OAUTH_TOKEN_KEY"),
+#         "remote_app": {
+# 	    "prompt": "none",
+#             "client_id": os.getenv("OAUTH_CLIENT_ID"),
+#             "client_secret": os.getenv("OAUTH_CLIENT_SECRET"),
+#             "client_kwargs": {
+#                 "scope": os.getenv("OAUTH_SCOPES")
+#             },
+#             "access_token_url": os.getenv("OAUTH_ACCESS_TOKEN_URL"),
+#             "authorize_url": os.getenv("OAUTH_AUTHORIZE_URL"),
+#             "server_metadata_url": os.getenv("OAUTH_SERVER_METADATA_URL"),
+#             "request_token_url": None,
+#             "jwks_uri": os.getenv("OAUTH_JWKS_URI"),
+#             "api_base_url": os.getenv("OAUTH_API_BASE_URL"),
+#         },
+#     },
+# ]
 
 # Lo siguiente es necesario por un Bug.
 # https://github.com/mitodl/ol-infrastructure/blob/main/src/ol_superset/pythonpath/superset_config.py#L88-L103
-class CustomSsoSecurityManager(SupersetSecurityManager):
-    def oauth_user_info(self, provider, response=None):  # noqa: ARG002
-        me = self.appbuilder.sm.oauth_remotes[provider].get("openid-connect/userinfo")
-        me.raise_for_status()
-        data = me.json()
-        logging.debug("User info from Keycloak: %s", data)
-        return {
-            "username": data.get("preferred_username", ""),
-            "first_name": data.get("given_name", ""),
-            "last_name": data.get("family_name", ""),
-            "email": data.get("email", ""),
-            "role_keys": data.get("role_keys", []),
-        }
+# class CustomSsoSecurityManager(SupersetSecurityManager):
+#     def oauth_user_info(self, provider, response=None):  # noqa: ARG002
+#         me = self.appbuilder.sm.oauth_remotes[provider].get("openid-connect/userinfo")
+#         me.raise_for_status()
+#         data = me.json()
+#         logging.debug("User info from Keycloak: %s", data)
+#         return {
+#             "username": data.get("preferred_username", ""),
+#             "first_name": data.get("given_name", ""),
+#             "last_name": data.get("family_name", ""),
+#             "email": data.get("email", ""),
+#             "role_keys": data.get("role_keys", []),
+#         }
 
-CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
+# CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
+############################################################
+
+
+############################################################
+# Usando Keycloak por OID
+# REF: https://superset.apache.org/docs/configuration/configuring-superset/
+from keycloak_security_manager import OIDCSecurityManager
+from flask_appbuilder.security.manager import AUTH_OID, AUTH_REMOTE_USER, AUTH_DB, AUTH_LDAP, AUTH_OAUTH
+import os
+
+AUTH_TYPE = AUTH_OID
+OIDC_CLIENT_SECRETS =  os.getenv("OIDC_CLIENT_SECRETS")
+OIDC_ID_TOKEN_COOKIE_SECURE = False
+OIDC_OPENID_REALM: os.getenv("OIDC_OPENID_REALM")
+OIDC_INTROSPECTION_AUTH_METHOD: 'client_secret_post'
+CUSTOM_SECURITY_MANAGER = OIDCSecurityManager
+############################################################
