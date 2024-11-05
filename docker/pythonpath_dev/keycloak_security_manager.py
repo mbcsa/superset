@@ -29,13 +29,15 @@ class AuthOIDCView(AuthOIDView):
 
         @self.appbuilder.sm.oid.require_login
         def handle_login():
-            user = sm.auth_user_oid(oidc.user_getfield('email'))
-
+            #kcEmail = oidc.user_getfield('email')
+            #user = sm.auth_user_oid(kcEmail)
+            # Busco por usuario y no por email
+            kcUsername = oidc.user_getfield('preferred_username')
+            user = sm.find_user(username=kcUsername)
             if user is None:
                 info = oidc.user_getinfo(['preferred_username', 'given_name', 'family_name', 'email'])
                 user = sm.add_user(info.get('preferred_username'), info.get('given_name'), info.get('family_name'),
                                    info.get('email'), sm.find_role('Gamma'))
-
             login_user(user, remember=False)
             return redirect(self.appbuilder.get_url_for_index)
 
